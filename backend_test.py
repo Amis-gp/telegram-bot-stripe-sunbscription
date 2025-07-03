@@ -28,7 +28,7 @@ class TestTelegramBotBackend(unittest.TestCase):
 
     def test_root_endpoint(self):
         """Test the root endpoint to ensure server is running"""
-        response = requests.get(f"{API_URL}/")
+        response = requests.get(f"{API_URL}/", timeout=10)
         self.assertEqual(response.status_code, 200)
         data = response.json()
         self.assertIn("message", data)
