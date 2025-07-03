@@ -36,7 +36,7 @@ class TestTelegramBotBackend(unittest.TestCase):
 
     def test_status_endpoint_get(self):
         """Test the GET status endpoint to verify database connectivity"""
-        response = requests.get(f"{API_URL}/status")
+        response = requests.get(f"{API_URL}/status", timeout=10)
         self.assertEqual(response.status_code, 200)
         data = response.json()
         self.assertIsInstance(data, list)
@@ -45,7 +45,7 @@ class TestTelegramBotBackend(unittest.TestCase):
     def test_status_endpoint_post(self):
         """Test the POST status endpoint to verify database write operations"""
         test_data = {"client_name": "backend_test_client"}
-        response = requests.post(f"{API_URL}/status", json=test_data)
+        response = requests.post(f"{API_URL}/status", json=test_data, timeout=10)
         self.assertEqual(response.status_code, 200)
         data = response.json()
         self.assertEqual(data["client_name"], "backend_test_client")
@@ -55,7 +55,7 @@ class TestTelegramBotBackend(unittest.TestCase):
 
     def test_admin_stats_endpoint(self):
         """Test the admin stats endpoint"""
-        response = requests.get(f"{API_URL}/admin/stats")
+        response = requests.get(f"{API_URL}/admin/stats", timeout=10)
         self.assertEqual(response.status_code, 200)
         data = response.json()
         
@@ -71,7 +71,7 @@ class TestTelegramBotBackend(unittest.TestCase):
 
     def test_admin_subscribers_endpoint(self):
         """Test the admin subscribers endpoint"""
-        response = requests.get(f"{API_URL}/admin/subscribers")
+        response = requests.get(f"{API_URL}/admin/subscribers", timeout=10)
         self.assertEqual(response.status_code, 200)
         data = response.json()
         
@@ -90,7 +90,7 @@ class TestTelegramBotBackend(unittest.TestCase):
             "duration_days": 30
         }
         
-        response = requests.post(f"{API_URL}/admin/add-subscriber", json=test_data)
+        response = requests.post(f"{API_URL}/admin/add-subscriber", json=test_data, timeout=10)
         self.assertEqual(response.status_code, 200)
         data = response.json()
         
@@ -123,7 +123,7 @@ class TestTelegramBotBackend(unittest.TestCase):
         # Note: We can't fully test this without a valid Stripe signature
         # So we're just testing that the endpoint exists and returns a 400 for invalid signature
         headers = {"Stripe-Signature": "invalid_signature"}
-        response = requests.post(f"{API_URL}/stripe-webhook", json=mock_event, headers=headers)
+        response = requests.post(f"{API_URL}/stripe-webhook", json=mock_event, headers=headers, timeout=10)
         
         # We expect a 400 error because of the invalid signature, which confirms the endpoint exists
         self.assertEqual(response.status_code, 400)
@@ -133,18 +133,18 @@ class TestTelegramBotBackend(unittest.TestCase):
         """Test error responses for invalid requests"""
         # Test with invalid JSON data
         invalid_data = "not_json_data"
-        response = requests.post(f"{API_URL}/status", data=invalid_data)
+        response = requests.post(f"{API_URL}/status", data=invalid_data, timeout=10)
         self.assertNotEqual(response.status_code, 200)
         print(f"✅ Error handling test passed for invalid JSON: {response.status_code}")
         
         # Test with missing required fields
         missing_fields = {}
-        response = requests.post(f"{API_URL}/status", json=missing_fields)
+        response = requests.post(f"{API_URL}/status", json=missing_fields, timeout=10)
         self.assertNotEqual(response.status_code, 200)
         print(f"✅ Error handling test passed for missing fields: {response.status_code}")
         
         # Test non-existent endpoint
-        response = requests.get(f"{API_URL}/nonexistent_endpoint")
+        response = requests.get(f"{API_URL}/nonexistent_endpoint", timeout=10)
         self.assertEqual(response.status_code, 404)
         print(f"✅ Error handling test passed for non-existent endpoint: {response.status_code}")
 
@@ -160,7 +160,7 @@ class TestTelegramBotBackend(unittest.TestCase):
         
         # We can't directly check the server's environment variables,
         # but we can infer they're loaded by checking if the API is working
-        response = requests.get(f"{API_URL}/")
+        response = requests.get(f"{API_URL}/", timeout=10)
         self.assertEqual(response.status_code, 200)
         print(f"✅ Environment variables test passed (inferred from API working)")
 
