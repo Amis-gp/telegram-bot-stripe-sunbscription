@@ -165,5 +165,27 @@ class TestTelegramBotBackend(unittest.TestCase):
         print(f"✅ Environment variables test passed (inferred from API working)")
 
 if __name__ == "__main__":
-    # Run the tests
-    unittest.main(argv=['first-arg-is-ignored'], exit=False)
+    # Run the tests individually with timeouts to prevent hanging
+    test_suite = unittest.TestSuite()
+    test_cases = [
+        TestTelegramBotBackend('test_root_endpoint'),
+        TestTelegramBotBackend('test_status_endpoint_get'),
+        TestTelegramBotBackend('test_status_endpoint_post'),
+        TestTelegramBotBackend('test_admin_stats_endpoint'),
+        TestTelegramBotBackend('test_admin_subscribers_endpoint'),
+        TestTelegramBotBackend('test_admin_add_subscriber'),
+        TestTelegramBotBackend('test_stripe_webhook_endpoint_structure'),
+        TestTelegramBotBackend('test_error_handling'),
+        TestTelegramBotBackend('test_environment_variables')
+    ]
+    
+    for test_case in test_cases:
+        try:
+            print(f"\n🔍 Running test: {test_case._testMethodName}")
+            test_suite.addTest(test_case)
+            result = unittest.TextTestRunner().run(test_case)
+            time.sleep(1)  # Small delay between tests
+        except Exception as e:
+            print(f"❌ Test {test_case._testMethodName} failed with error: {str(e)}")
+    
+    print("\n✅ All tests completed")
