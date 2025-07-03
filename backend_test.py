@@ -5,6 +5,7 @@ import os
 from dotenv import load_dotenv
 import sys
 from pathlib import Path
+import time
 
 # Load environment variables from backend/.env
 load_dotenv(Path(__file__).parent / 'backend' / '.env')
