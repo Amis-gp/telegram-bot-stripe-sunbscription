@@ -276,8 +276,8 @@ async def create_stripe_checkout_session(telegram_user_id: int) -> str:
                 "quantity": 1,
             }],
             mode="subscription",
-            success_url=f"{DOMAIN}/success?session_id={{CHECKOUT_SESSION_ID}}",
-            cancel_url=f"{DOMAIN}/cancel",
+            success_url=f"https://t.me/{BOT_TOKEN.split(':')[0]}?start=payment_success_{{CHECKOUT_SESSION_ID}}",
+            cancel_url=f"https://t.me/{BOT_TOKEN.split(':')[0]}?start=payment_canceled",
             metadata={
                 "telegram_user_id": str(telegram_user_id),
                 "user_id": user["id"]
