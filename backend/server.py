@@ -434,6 +434,9 @@ async def stripe_webhook(request: Request, stripe_signature: str = Header(None))
         event = stripe.Webhook.construct_event(
             payload, stripe_signature, os.environ['STRIPE_WEBHOOK_SECRET']
         )
+        
+        logging.info(f"Received Stripe webhook: {event['type']}")
+        
     except ValueError as e:
         logging.error(f"Invalid payload: {e}")
         raise HTTPException(status_code=400, detail="Invalid payload")
@@ -463,6 +466,29 @@ async def stripe_webhook(request: Request, stripe_signature: str = Header(None))
         await handle_invoice_payment_failed(invoice)
     
     return {"status": "success"}
+
+@api_router.get("/check-payment/{session_id}")
+async def check_payment_status(session_id: str):
+    """Check payment status for a session"""
+    try:
+        session = stripe.checkout.Session.retrieve(session_id)
+        
+        # Check if subscription exists in database
+        subscription = None
+        if session.subscription:
+            subscription = await db.subscriptions.find_one(
+                {"stripe_subscription_id": session.subscription}
+            )
+        
+        return {
+            "payment_status": session.payment_status,
+            "subscription_status": subscription["status"] if subscription else None,
+            "session_id": session_id
+        }
+        
+    except Exception as e:
+        logging.error(f"Error checking payment status: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 async def handle_checkout_session_completed(session):
     """Handle successful checkout session"""
