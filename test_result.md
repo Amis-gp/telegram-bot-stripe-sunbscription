@@ -276,12 +276,12 @@ metadata:
 
 test_plan:
   current_focus:
-    - "API Health Check"
-    - "Admin API Endpoints"
-    - "Stripe Webhook Endpoint"
-    - "Database Operations"
-    - "Environment Variables"
-    - "Error Handling"
+    - "Navigation and Layout"
+    - "Statistics Tab"
+    - "Subscribers Tab"
+    - "Add Subscriber Tab"
+    - "Responsive Design"
+    - "API Integration"
   stuck_tasks: []
   test_all: true
   test_priority: "high_first"
