@@ -111,6 +111,22 @@ async def start_command(update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
     telegram_user_id = user.id
     
+    # Check if this is a payment return
+    if context.args and len(context.args) > 0:
+        command = context.args[0]
+        
+        if command.startswith("payment_success_"):
+            session_id = command.replace("payment_success_", "")
+            await handle_payment_return(update, session_id, success=True)
+            return
+        elif command == "payment_canceled":
+            await update.message.reply_text(
+                "❌ Платіж скасовано.\n\n"
+                "Щоб спробувати ще раз, натисніть кнопку нижче 👇",
+                reply_markup=get_subscription_keyboard()
+            )
+            return
+    
     # Check if user already exists
     existing_user = await db.users.find_one({"telegram_user_id": telegram_user_id})
     if not existing_user:
@@ -141,6 +157,52 @@ async def start_command(update, context: ContextTypes.DEFAULT_TYPE):
             f"📅 Тривалість: {SUBSCRIPTION_DAYS} днів\n\n"
             f"Для оформлення підписки натисніть кнопку нижче 👇",
             reply_markup=get_subscription_keyboard()
+        )
+
+async def handle_payment_return(update, session_id, success=True):
+    """Handle return from payment"""
+    user = update.effective_user
+    telegram_user_id = user.id
+    
+    if success:
+        # Check if payment was processed
+        try:
+            session = stripe.checkout.Session.retrieve(session_id)
+            
+            if session.payment_status == "paid":
+                # Check if subscription exists in database
+                subscription = await db.subscriptions.find_one(
+                    {"telegram_user_id": telegram_user_id, "status": "active"}
+                )
+                
+                if subscription:
+                    await update.message.reply_text(
+                        f"✅ Платіж успішний! Ваша підписка активна до {subscription['current_period_end'].strftime('%d.%m.%Y')}\n\n"
+                        f"Приєднуйтесь до групи: {GROUP_INVITE_LINK}"
+                    )
+                else:
+                    # Payment successful but subscription not activated yet
+                    await update.message.reply_text(
+                        f"✅ Платіж успішний! Ваша підписка активується протягом декількох хвилин.\n\n"
+                        f"Після активації ви зможете приєднатися до групи: {GROUP_INVITE_LINK}\n\n"
+                        f"Для перевірки статусу натисніть: /start"
+                    )
+            else:
+                await update.message.reply_text(
+                    f"⏳ Платіж обробляється...\n\n"
+                    f"Після завершення обробки ви отримаєте повідомлення про активацію підписки.\n\n"
+                    f"Для перевірки статусу натисніть: /start"
+                )
+        except Exception as e:
+            logging.error(f"Error checking payment status: {str(e)}")
+            await update.message.reply_text(
+                f"❌ Помилка при перевірці статусу платежу.\n\n"
+                f"Спробуйте ще раз за кілька хвилин: /start"
+            )
+    else:
+        await update.message.reply_text(
+            "❌ Платіж не вдався.\n\n"
+            "Для спроби ще раз натисніть: /start"
         )
 
 def get_subscription_keyboard():
